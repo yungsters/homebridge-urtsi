@@ -10,10 +10,25 @@ This plugin makes use of the [node-urtsi](https://github.com/yungsters/node-urts
 {
   "platform": "Somfy URTSI",
   "channels": [
-    "Channel 1",
-    "Channel 2",
-    "Channel 3",
-    "Channel 4",
+    {
+      "name": "Family Room Window",
+    },
+    {
+      "name": "Dining Room Window",
+      "orientation": {
+        "closed": "down",
+        "middle": "stop",
+        "opened": "up"
+      }
+    },
+    {
+      "name": "Master Bedroom Window",
+      "orientation": {
+        "closed": "stop",
+        "middle": "down",
+        "opened": "up"
+      }
+    }
     "..."
   ],
   "serialPath": "/dev/ttyUSB0"

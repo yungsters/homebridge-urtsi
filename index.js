@@ -15,26 +15,43 @@ module.exports = homebridge => {
   class URTSIPlatform {
     constructor(log, config) {
       this.log = log;
-      const channelNames = config.channels;
-      if (!Array.isArray(channelNames)) {
+      const channelConfigs = config.channels;
+      if (!Array.isArray(channelConfigs)) {
         this.log('Bad `config.channels` value, must be an array.');
-        this.channelNames = [];
+        this.channelConfigs = [];
       } else {
-        this.channelNames = channelNames;
+        this.channelConfigs = channelConfigs;
       }
       this.urtsi = new URTSI(config.serialPath);
     }
 
     accessories(callback) {
-      const accessories = this.channelNames.map((channelName, index) => {
-        if (channelName === null) {
+      const accessories = this.channelConfigs.map((channelConfig, index) => {
+        if (channelConfig === null) {
           return null;
         }
-        if (typeof channelName !== 'string') {
-          this.log(`Bad channel at index ${index}, must be a string or null.`);
+        if (typeof channelConfig !== 'object') {
+          this.log(`Bad channel at index ${index}, must be an object or null.`);
           return null;
         }
-        return new URTSIChannelAccessory(this, channelName, index + 1);
+        const name = channelConfig.name;
+        if (typeof name !== 'string') {
+          this.log(`Bad channel name at index ${index}, must be a string.`);
+          return null;
+        }
+        const orientation = channelConfig.orientation || {
+          closed: 'down',
+          middle: 'stop',
+          opened: 'up'
+        };
+        if (typeof orientation !== 'object' ||
+            ['closed', 'middle', 'opened'].some(
+              state => ['down', 'stop', 'up'].indexOf(orientation[state]) < 0
+            )) {
+          this.log(`Bad channel orientation at index ${index}.`);
+          return null;
+        }
+        return new URTSIChannelAccessory(this, index + 1, {name, orientation});
       });
       callback(accessories.filter(accessory => accessory !== null));
     }
@@ -45,8 +62,8 @@ module.exports = homebridge => {
    */
 
   class URTSIChannelAccessory extends Accessory {
-    constructor(platform, channelName, channelNumber) {
-      const displayName = `Somfy ${channelName}`;
+    constructor(platform, channelNumber, channelConfig) {
+      const displayName = `Somfy ${channelConfig.name}`;
       const uuid = UUIDGen.generate(`urtsi.channel.${channelNumber}`);
       super(displayName, uuid);
 
@@ -62,12 +79,15 @@ module.exports = homebridge => {
         .setCharacteristic(Characteristic.Model, 'Universal RTS Interface II');
 
       this.addService(
-        this.createWindowCoveringService(channelName, channelNumber)
+        this.createWindowCoveringService(channelNumber, channelConfig)
       );
     }
 
-    createWindowCoveringService(channelName, channelNumber) {
-      const service = new Service.WindowCovering(channelName);
+    createWindowCoveringService(channelNumber, channelConfig) {
+      const name = channelConfig.name;
+      const orientation = channelConfig.orientation;
+
+      const service = new Service.WindowCovering(name);
 
       const currentPosition =
         service.getCharacteristic(Characteristic.CurrentPosition);
@@ -80,7 +100,7 @@ module.exports = homebridge => {
         const logError = error => {
           this.log(
             'Encountered an error setting target position of %s: %s',
-            `channel ${channelNumber} (${channelName})`,
+            `channel ${channelNumber} (${name})`,
             error.message
           );
         };
@@ -94,7 +114,7 @@ module.exports = homebridge => {
 
           this.log(
             'Setting target position of %s from %s to %s.',
-            `channel ${channelNumber} (${channelName})`,
+            `channel ${channelNumber} (${name})`,
             `${currentValue}%`,
             `${targetValue}%`
           );
@@ -111,10 +131,10 @@ module.exports = homebridge => {
           const channel = this.urtsi.getChannel(channelNumber);
           const promise =
             targetValue === 0
-              ? channel.down()
+              ? channel[orientation.closed]()
               : targetValue === 100
-                ? channel.up()
-                : channel.stop();
+                ? channel[orientation.opened]()
+                : channel[orientation.middle]();
 
           promise.then(
             () => {
