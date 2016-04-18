@@ -11,7 +11,7 @@ This plugin makes use of the [node-urtsi](https://github.com/yungsters/node-urts
   "platform": "Somfy URTSI",
   "channels": [
     {
-      "name": "Family Room Window",
+      "name": "Family Room Window"
     },
     {
       "name": "Dining Room Window",
@@ -28,7 +28,7 @@ This plugin makes use of the [node-urtsi](https://github.com/yungsters/node-urts
         "middle": "down",
         "opened": "up"
       }
-    }
+    },
     "..."
   ],
   "serialPath": "/dev/ttyUSB0"
