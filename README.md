@@ -15,6 +15,7 @@ This plugin makes use of the [node-urtsi](https://github.com/yungsters/node-urts
     "Channel 3",
     "Channel 4",
     "..."
-  ]
+  ],
+  "serialPath": "/dev/ttyUSB0"
 }
 ```

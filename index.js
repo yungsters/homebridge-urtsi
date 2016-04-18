@@ -1,5 +1,7 @@
 'use strict';
 
+const URTSI = require('urtsi');
+
 module.exports = homebridge => {
   const Accessory = homebridge.platformAccessory;
   const Characteristic = homebridge.hap.Characteristic;
@@ -20,6 +22,7 @@ module.exports = homebridge => {
       } else {
         this.channelNames = channelNames;
       }
+      this.urtsi = new URTSI(config.serialPath);
     }
 
     accessories(callback) {
@@ -52,6 +55,7 @@ module.exports = homebridge => {
       this.uuid_base = uuid;
 
       this.log = platform.log;
+      this.urtsi = platform.urtsi;
 
       this.getService(Service.AccessoryInformation)
         .setCharacteristic(Characteristic.Manufacturer, 'Somfy')
@@ -103,10 +107,16 @@ module.exports = homebridge => {
           );
           callback();
 
-          // TODO: Replace with URTSI.
-          new Promise(resolve => {
-            setTimeout(resolve, 1000);
-          }).then(
+
+          const channel = this.urtsi.getChannel(channelNumber);
+          const promise =
+            targetValue === 0
+              ? channel.down()
+              : targetValue === 100
+                ? channel.up()
+                : channel.stop();
+
+          promise.then(
             () => {
               currentPosition.setValue(targetValue);
               positionState.setValue(Characteristic.PositionState.STOPPED);
