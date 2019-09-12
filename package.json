@@ -1,6 +1,6 @@
 {
   "name": "homebridge-urtsi",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Somfy Universal RTS Interface (URTSI) plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "MIT",
   "keywords": [
@@ -15,6 +15,6 @@
     "homebridge": ">=0.2.0"
   },
   "dependencies": {
-    "urtsi": "^2.0.1"
+    "urtsi": "^2.1.0"
   }
 }
